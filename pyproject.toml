@@ -18,7 +18,14 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
 ]
+
+[project.urls]
+Homepage = "https://github.com/MukundaKatta/tool-call-rate-limit"
+Repository = "https://github.com/MukundaKatta/tool-call-rate-limit"
+Issues = "https://github.com/MukundaKatta/tool-call-rate-limit/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
