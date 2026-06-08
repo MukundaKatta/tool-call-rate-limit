@@ -1,8 +1,20 @@
 # tool-call-rate-limit
 
+[![CI](https://github.com/MukundaKatta/tool-call-rate-limit/actions/workflows/ci.yml/badge.svg)](https://github.com/MukundaKatta/tool-call-rate-limit/actions/workflows/ci.yml)
+
 Sliding-window rate limiter for agent tool calls — per-tool limits, no dependencies.
 
 Zero dependencies. Python 3.10+. MIT.
+
+## Why
+
+When an LLM agent drives a loop of tool calls, a single bad plan can hammer an
+expensive or fragile tool (a web search API, a shell command, a paid endpoint)
+dozens of times in seconds. `RateLimiter` gives you a tiny, in-process guard
+rail: register a default budget plus tight per-tool overrides, then call
+`check(tool)` in your dispatch path. It uses a true **sliding window** (it
+remembers individual call timestamps rather than resetting on a fixed interval),
+so bursts at a window boundary cannot sneak past the limit.
 
 ## Install
 
@@ -78,6 +90,39 @@ except RateLimitExceeded as e:
     print(e.retry_after)   # seconds until a slot opens
     print(e.current_count) # calls recorded in window
 ```
+
+## Deterministic time in tests
+
+`RateLimiter` accepts a `clock` callable (defaulting to `time.monotonic`) so you
+can drive time forward by hand instead of sleeping in tests:
+
+```python
+class FakeClock:
+    def __init__(self, t=0.0):
+        self.t = t
+    def __call__(self):
+        return self.t
+    def advance(self, seconds):
+        self.t += seconds
+
+clock = FakeClock()
+limiter = RateLimiter(calls=2, per_seconds=10, clock=clock)
+limiter.check("tool")
+limiter.check("tool")          # at limit
+clock.advance(11)              # window slides
+limiter.check("tool")          # allowed again
+```
+
+## Development
+
+The package and its test suite have no third-party dependencies. Run the tests
+with the standard library only:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+CI runs this suite on Python 3.10–3.13 (see `.github/workflows/ci.yml`).
 
 ## License
 
